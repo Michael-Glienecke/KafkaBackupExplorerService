@@ -20,6 +20,7 @@ public class BackupBlobStorageNode {
 
     private String name;
     private List<BackupBlobStorageNode> children;
+    @Setter
     private LocalDateTime representedDateTime;
     private String topicName;
     private String fileName;
@@ -56,10 +57,10 @@ public class BackupBlobStorageNode {
         this.name = name;
     }
 
-    public BackupBlobStorageNode(String name, Pattern parsingPattern) {
+    public BackupBlobStorageNode(String name, Pattern dataFileParsingPattern) {
         this.name = name;
 
-        Matcher matcher = parsingPattern.matcher(name);
+        Matcher matcher = dataFileParsingPattern.matcher(name);
         this.didPatternMatch = matcher.find();
         if (didPatternMatch) {
             try {

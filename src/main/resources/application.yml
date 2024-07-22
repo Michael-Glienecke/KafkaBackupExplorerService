@@ -12,3 +12,6 @@ kafka:
       rootDirectory: topics/
 
 
+regex:
+  fileNode: ([a-zA-Z_0-9-]+)/([a-zA-Z_0-9-]+)/year=(\d+)/month=(\d+)/day=(\d+)/hour=(\d+)/([a-zA-Z_0-9-+.]+)
+  structuralNode: ([a-zA-Z_0-9-]*)/?(?<topic>([a-zA-Z_0-9-]*))?/?(year=(?<year>\d+))?/?(month=(?<month>\d+))?/?(day=(?<day>\d+))?/?(hour=(?<hour>\d+))?/

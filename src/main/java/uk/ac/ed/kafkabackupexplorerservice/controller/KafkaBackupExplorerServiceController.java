@@ -14,10 +14,8 @@ import uk.ac.ed.kafkabackupexplorerservice.data.BackupBlobStorageNode;
 
 import java.io.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
@@ -45,8 +43,14 @@ public class KafkaBackupExplorerServiceController {
     @Value("${debug.showOutput}")
     private boolean showDebugOutput;
 
-    private final Pattern fileNodePattern = Pattern.compile("([a-zA-Z_0-9-]+)/([a-zA-Z_0-9-]+)/year=(\\d+)/month=(\\d+)/day=(\\d+)/hour=(\\d+)/([a-zA-Z_0-9-+.]+)");
-    private final Pattern structuralNodePattern = Pattern.compile("([a-zA-Z_0-9-]+)/([a-zA-Z_0-9-]+)/year=(\\d+)/month=(\\d+)/day=(\\d+)/hour=(\\d+)");
+    @Value("${regex.fileNode}")
+    private String fileNodePatternRegEx;
+
+    @Value("${regex.structuralNode}")
+    private String structuralNodePatternRegEx;
+    private Pattern fileNodePattern = null;
+    private Pattern structuralNodePattern = null;
+
 
     /**
      * a simple alive check
@@ -58,19 +62,30 @@ public class KafkaBackupExplorerServiceController {
         return true;
     }
 
+    private void oneTimeInit() {
+        if (fileNodePattern == null) {
+            fileNodePattern = Pattern.compile(fileNodePatternRegEx);
+        }
+        if (structuralNodePattern == null) {
+            structuralNodePattern = Pattern.compile(structuralNodePatternRegEx);
+            // structuralNodePattern = Pattern.compile("([a-zA-Z_0-9-]*)/?([a-zA-Z_0-9-]*)?/?(year=(\\d+))?/?(month=(\\d+))?/?(day=(\\d+))?/?(hour=(\\d+))?/");
+        }
+    }
+
     /**
      * list the entire tree of items
      * @return a list of tree entries always with / notation
      * @throws IOException should either the Azure connection fail or a security problem exist
      */
     @Operation
-    @GetMapping(value = {"/backupNodes", "/backupNodes/{nodesFrom}", "/backupNodes/{nodesFrom}/{nodesUntil}" })
-    public ResponseEntity<List<BackupBlobStorageNode>> getBackupNodes(
+    @GetMapping(value = {"/", "/{nodesFrom}", "/{nodesFrom}/{nodesUntil}" })
+    public ResponseEntity<List<BackupBlobStorageNode>> getAllNodes(
             @PathVariable (required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Optional<LocalDateTime> nodesFrom,
             @PathVariable (required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Optional<LocalDateTime> nodesUntil
             ) throws IOException {
 
         try {
+            oneTimeInit();
             var blobContainerClient = getBlobContainerClient(getBlobServiceClient());
             return ResponseEntity.ok(loadStorageNodes(blobContainerClient, kafkaBackupStorageContainerRootDirectory, nodesFrom, nodesUntil));
         } catch (Exception ex) {
@@ -118,10 +133,75 @@ public class KafkaBackupExplorerServiceController {
                 }
             } else {
                 // check for the dates in structural nodes as perhaps no traversal is necessary
-                currentNode = new BackupBlobStorageNode(blob.getName(), loadStorageNodes(client, blob.getName(), nodesFrom, nodesUntil));
+                Matcher matcher = structuralNodePattern.matcher(blob.getName());
+
+                // parse the name -> first in order will be the year, then the month, day and hour
+                if (matcher.matches()) {
+
+                    Map<String, String> keyValueSet = new HashMap<>();
+                    matcher.namedGroups().forEach((groupName, index) -> {
+                        if (showDebugOutput) {
+                            System.out.printf("%s (%d): %s%n", groupName, index, matcher.group(groupName));
+                        }
+
+                        if (matcher.group(groupName) != null) {
+                            keyValueSet.put(groupName, matcher.group(groupName));
+                        }
+                    });
+
+                    // TODO has to be handled differently as only year might still be a valid match...
+                    int day = 1;
+                    int month = 1;
+                    int year = 1900;
+                    int hour = 0;
+                    String topic = "";
+
+                    for (String key : keyValueSet.keySet()) {
+                        switch (key) {
+                            case "day":
+                                day = Integer.parseInt(keyValueSet.get(key));
+                                break;
+
+                            case "hour":
+                                hour = Integer.parseInt(keyValueSet.get(key));
+                                break;
+
+                            case "year":
+                                year = Integer.parseInt(keyValueSet.get(key));
+                                break;
+
+                            case "month":
+                                month = Integer.parseInt(keyValueSet.get(key));
+                                break;
+
+                            case "topic":
+                                topic = keyValueSet.get(key);
+                        }
+                    }
+
+                    LocalDateTime matchingDateTime = LocalDateTime.of(year, month, day, hour, 0, 0);
+
+                    // only use the record if the match is correct. If no data is passed in then MIN / MAX will be used (always match). In case only the topic is passed then just continue
+                    boolean useRecord = keyValueSet.keySet().size() == 1 ||
+                            matchingDateTime.isAfter(nodesFrom.orElse(LocalDateTime.MIN)) &&  matchingDateTime.isBefore(nodesUntil.orElse(LocalDateTime.MAX));
+
+                    if (useRecord) {
+                        currentNode = new BackupBlobStorageNode(blob.getName(), loadStorageNodes(client, blob.getName(), nodesFrom, nodesUntil));
+                    } else {
+                        if (showDebugOutput) {
+                            System.out.printf("Node %s skipped as date range was set to %s - %s%n", blob.getName(), nodesFrom.orElse(LocalDateTime.MIN), nodesUntil.orElse(LocalDateTime.MAX));
+                        }
+                    }
+                } else {
+                    // should there be no match...
+                    // problem... the entry doesn't match the pattern
+                    log.error("a directory node doesn't match the pattern and was skipped: " + blob.getName());
+                }
             }
 
-            nodes.add(currentNode);
+            if (currentNode != null) {
+                nodes.add(currentNode);
+            }
         });
 
         return nodes;

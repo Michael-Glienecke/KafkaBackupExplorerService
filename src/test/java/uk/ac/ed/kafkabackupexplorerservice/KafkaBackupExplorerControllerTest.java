@@ -39,7 +39,8 @@ public class KafkaBackupExplorerControllerTest {
 
     @Test
     void regexTestStructuralNodes() {
-        final Pattern structuralNodePattern = Pattern.compile("([a-zA-Z_0-9-]*)/?([a-zA-Z_0-9-]*)?/?(year=(\\d+))?/?(month=(\\d+))?/?(day=(\\d+))?/?(hour=(\\d+))?/");
+        final Pattern structuralNodePattern = Pattern.compile("([a-zA-Z_0-9-]*)/?(?<topic>([a-zA-Z_0-9-]*))?/?(year=(?<year>\\d+))?/?(month=(?<month>\\d+))?/?(day=(?<day>\\d+))?/?(hour=(?<hour>\\d+))?/");
+        // final Pattern structuralNodePattern = Pattern.compile("([a-zA-Z_0-9-]*)/?([a-zA-Z_0-9-]*)?/?(year=(\\d+))?/?(month=(\\d+))?/?(day=(\\d+))?/?(hour=(\\d+))?/");
 
         String[] checkEntries = {
                 "topics/neptunedb-reports/",
@@ -53,6 +54,7 @@ public class KafkaBackupExplorerControllerTest {
             Matcher matcher = structuralNodePattern.matcher(checkEntries[i]);
             if (matcher.matches()) {
                 System.out.printf("%s\n", checkEntries[i]);
+
                 for (int j = 0; j <= matcher.groupCount(); j++) {
                     if (matcher.group(j) == null) {
                         break;
@@ -60,11 +62,19 @@ public class KafkaBackupExplorerControllerTest {
                     System.out.printf("%d: %s%n", j, matcher.group(j));
                 }
             }
+            matcher.namedGroups().forEach((g, index) -> {
+                System.out.printf("%s (%d): %s%n", g, index, matcher.group(g));
+            });
         }
     }
 
     @Test
     void getTreeShouldReturnData() throws Exception {
-        this.mockMvc.perform(get("/api/kafkabackupexplorer/v1/backupNodes")).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON));
+        this.mockMvc.perform(get("/api/kafkabackupexplorer/v1/")).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    void getTreeWithLimitShouldReturnData() throws Exception {
+        this.mockMvc.perform(get("/api/kafkabackupexplorer/v1/2023-11-03T14:00:15")).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON));
     }
 }
