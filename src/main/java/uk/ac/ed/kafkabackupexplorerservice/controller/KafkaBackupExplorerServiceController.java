@@ -42,7 +42,11 @@ public class KafkaBackupExplorerServiceController {
     @Value("${kafka.backupStorage.container.rootDirectory}")
     private String kafkaBackupStorageContainerRootDirectory;
 
+    @Value("${debug.showOutput}")
+    private boolean showDebugOutput;
+
     private final Pattern fileNodePattern = Pattern.compile("([a-zA-Z_0-9-]+)/([a-zA-Z_0-9-]+)/year=(\\d+)/month=(\\d+)/day=(\\d+)/hour=(\\d+)/([a-zA-Z_0-9-+.]+)");
+    private final Pattern structuralNodePattern = Pattern.compile("([a-zA-Z_0-9-]+)/([a-zA-Z_0-9-]+)/year=(\\d+)/month=(\\d+)/day=(\\d+)/hour=(\\d+)");
 
     /**
      * a simple alive check
@@ -68,45 +72,55 @@ public class KafkaBackupExplorerServiceController {
 
         try {
             var blobContainerClient = getBlobContainerClient(getBlobServiceClient());
-            return ResponseEntity.ok(loadStorageNodes(blobContainerClient, kafkaBackupStorageContainerRootDirectory));
+            return ResponseEntity.ok(loadStorageNodes(blobContainerClient, kafkaBackupStorageContainerRootDirectory, nodesFrom, nodesUntil));
         } catch (Exception ex) {
             log.error("error during retrieving the backup tree", ex);
             throw ex;
         }
     }
 
-    private List<BackupBlobStorageNode> loadStorageNodes(BlobContainerClient client, String rootNode) {
+    private List<BackupBlobStorageNode> loadStorageNodes(BlobContainerClient client, String rootNode, Optional<LocalDateTime> nodesFrom, Optional<LocalDateTime> nodesUntil) {
         var nodes = new ArrayList<BackupBlobStorageNode>();
 
         client.listBlobsByHierarchy(rootNode).forEach(blob -> {
 
-            System.out.printf("%s %s%n", (blob.isPrefix() ? "(D)" : "   "), blob.getName());
+            if (showDebugOutput) {
+                System.out.printf("%s %s%n", (blob.isPrefix() ? "(D)" : "   "), blob.getName());
+            }
 
-            BackupBlobStorageNode currentNode = blob.isPrefix() ?
-                new BackupBlobStorageNode(blob.getName(), loadStorageNodes(client, blob.getName())) :
-                new BackupBlobStorageNode(blob.getName(), fileNodePattern);
+            BackupBlobStorageNode currentNode = null;
 
-            if (currentNode.isBackupDataFileNode()) {
+            if (!blob.isPrefix()) {
+                currentNode = new BackupBlobStorageNode(blob.getName(), fileNodePattern);
 
-                try (ByteArrayOutputStream fos = new ByteArrayOutputStream()) {
-                    try (GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(client.getBlobClient(blob.getName()).downloadContent().toBytes()))) {
-                        byte[] buffer = new byte[1024];
-                        int len;
-                        while ((len = gis.read(buffer)) > 0) {
-                            fos.write(buffer, 0, len);
+                if (currentNode.isBackupDataFileNode()) {
+
+                    try (ByteArrayOutputStream fos = new ByteArrayOutputStream()) {
+                        try (GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(client.getBlobClient(blob.getName()).downloadContent().toBytes()))) {
+                            byte[] buffer = new byte[1024];
+                            int len;
+                            while ((len = gis.read(buffer)) > 0) {
+                                fos.write(buffer, 0, len);
+                            }
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
                         }
+
+                        currentNode.setFileContent(fos.toString());
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
 
-                    currentNode.setFileContent(fos.toString());
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    if (showDebugOutput) {
+                        System.out.printf("Topic: %s, represented time: %s, filename: %s\n", currentNode.getTopicName(), currentNode.getRepresentedDateTime().toString(), currentNode.getFileName());
+                        System.out.printf("First 400 characters: %s\n", currentNode.getFileContent().substring(0, Math.min(currentNode.getFileContent().length(), 400)));
+                    }
                 }
-
-                System.out.printf("Topic: %s, represented time: %s, filename: %s\n", currentNode.getTopicName(), currentNode.getRepresentedDateTime().toString(), currentNode.getFileName());
-                System.out.printf("First 400 characters: %s\n", currentNode.getFileContent().substring(0, Math.min(currentNode.getFileContent().length(), 400)));
+            } else {
+                // check for the dates in structural nodes as perhaps no traversal is necessary
+                currentNode = new BackupBlobStorageNode(blob.getName(), loadStorageNodes(client, blob.getName(), nodesFrom, nodesUntil));
             }
+
             nodes.add(currentNode);
         });
 

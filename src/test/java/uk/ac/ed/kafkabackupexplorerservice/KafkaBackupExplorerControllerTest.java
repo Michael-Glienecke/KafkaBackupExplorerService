@@ -37,6 +37,31 @@ public class KafkaBackupExplorerControllerTest {
         }
     }
 
+    @Test
+    void regexTestStructuralNodes() {
+        final Pattern structuralNodePattern = Pattern.compile("([a-zA-Z_0-9-]*)/?([a-zA-Z_0-9-]*)?/?(year=(\\d+))?/?(month=(\\d+))?/?(day=(\\d+))?/?(hour=(\\d+))?/");
+
+        String[] checkEntries = {
+                "topics/neptunedb-reports/",
+                "topics/neptunedb-reports/year=2023/",
+                "topics/neptunedb-reports/year=2023/month=11/",
+                "topics/neptunedb-reports/year=2023/month=11/day=03/",
+                "topics/neptunedb-reports/year=2023/month=11/day=03/hour=15/"
+        };
+
+        for (int i=0; i < checkEntries.length; i++) {
+            Matcher matcher = structuralNodePattern.matcher(checkEntries[i]);
+            if (matcher.matches()) {
+                System.out.printf("%s\n", checkEntries[i]);
+                for (int j = 0; j <= matcher.groupCount(); j++) {
+                    if (matcher.group(j) == null) {
+                        break;
+                    }
+                    System.out.printf("%d: %s%n", j, matcher.group(j));
+                }
+            }
+        }
+    }
 
     @Test
     void getTreeShouldReturnData() throws Exception {
