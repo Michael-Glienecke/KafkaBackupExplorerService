@@ -1,4 +1,4 @@
-package uk.ac.ed.acpstorageservice.controller;
+package uk.ac.ed.kafkabackupexplorerservice.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.boot.web.servlet.error.ErrorController;

@@ -1,31 +1,22 @@
-package uk.ac.ed.acpstorageservice.controller;
+package uk.ac.ed.kafkabackupexplorerservice.controller;
 
-import com.azure.core.annotation.QueryParam;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
-import com.azure.storage.blob.models.BlobItem;
-import com.azure.storage.blob.models.ListBlobsOptions;
 import com.google.gson.Gson;
-import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 import redis.clients.jedis.params.SetParams;
-import uk.ac.ed.acpstorageservice.data.StorageDataDefinition;
+import uk.ac.ed.kafkabackupexplorerservice.data.StorageDataDefinition;
 
-import java.io.BufferedInputStream;
-import java.io.Console;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
-import redis.clients.jedis.Jedis;
+
 import redis.clients.jedis.JedisPool;
 /**
  * the ILP Tutorial service which provides suppliers, orders and other useful things

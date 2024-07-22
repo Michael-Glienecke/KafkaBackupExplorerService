@@ -1,13 +1,13 @@
-package uk.ac.ed.acpstorageservice;
+package uk.ac.ed.kafkabackupexplorerservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class AcpStorageServiceApplication {
+public class KafkaBackupExplorerServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(AcpStorageServiceApplication.class, args);
+        SpringApplication.run(KafkaBackupExplorerServiceApplication.class, args);
     }
 
 }

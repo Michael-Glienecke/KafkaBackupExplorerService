@@ -1,4 +1,4 @@
-package uk.ac.ed.acpstorageservice.data;
+package uk.ac.ed.kafkabackupexplorerservice.data;
 
 /**
  * defines the storage data to write

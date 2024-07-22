@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>uk.ac.ed</groupId>
-    <artifactId>AcpStorageService</artifactId>
+    <artifactId>KafkaBackupExplorerService</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>AcpStorageService</name>
-    <description>AcpStorageService</description>
+    <name>KafkaBackupExplorerService</name>
+    <description>KafkaBackupExplorerService</description>
     <properties>
         <java.version>17</java.version>
     </properties>
