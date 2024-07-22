@@ -1,0 +1,11 @@
+server:
+  port: 8080
+
+kafka:
+  backupStorage:
+    connectionString: BlobEndpoint=https://kafkamsgbckppoc.blob.core.windows.net/kafkabackups?sp=rl&st=2024-07-22T17:58:37Z&se=2024-08-20T01:58:37Z&spr=https&sv=2022-11-02&sr=c&sig=YOuJSkgIi3AODXL9jVBqPDobD8dkF%2BKjsF%2BodDEf02Q%3D
+    container:
+      name: kafkabackups
+      rootDirectory: topics/
+
+
