@@ -107,6 +107,14 @@ public class KafkaBackupExplorerControllerTest {
                 .andExpect(backupBlobs().doesNotContainDataFileNodes());
     }
 
+    @Test
+    void searchAllWithRealMatchShouldReturnDataNodes() throws Exception {
+        this.mockMvc.perform(get("/api/kafkabackupexplorer/v1/*?searchPattern=gs.event.db.datachange.neptune.actions"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(backupBlobs().doesContainDataFileNodes());
+    }
+
 
     private BackupBlobStorageNodeResponseHandler backupBlobs() {
         return new BackupBlobStorageNodeResponseHandler();

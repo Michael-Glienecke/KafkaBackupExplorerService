@@ -183,7 +183,7 @@ public class KafkaBackupExplorerServiceController {
                         try {
                             // if it is a proper data file, then check the content if a match happens
                             String uncompressedFileContent = decompressDataFile(client, blob);
-                            if (searchPattern.matcher(uncompressedFileContent).matches()) {
+                            if (searchPattern.matcher(uncompressedFileContent).find()) {
                                 String topicName =  matcher.group("topic");
                                 String fileName = matcher.group("fileName");
                                 LocalDateTime representedDateTime = LocalDateTime.of(Integer.parseInt(matcher.group("year")), Integer.parseInt(matcher.group("month")), Integer.parseInt(matcher.group("day")), Integer.parseInt(matcher.group("hour")), 0, 0);
