@@ -4,6 +4,13 @@ server:
 debug:
   showOutput: true
 
+logging:
+  level:
+    com:
+      globalshares:
+          kafkabackupexplorerservice:
+            controller: DEBUG
+
 kafka:
   backupStorage:
     connectionString: BlobEndpoint=https://kafkamsgbckppoc.blob.core.windows.net/kafkabackups?sp=rl&st=2024-07-22T17:58:37Z&se=2024-08-20T01:58:37Z&spr=https&sv=2022-11-02&sr=c&sig=YOuJSkgIi3AODXL9jVBqPDobD8dkF%2BKjsF%2BodDEf02Q%3D
@@ -13,5 +20,5 @@ kafka:
 
 
 regex:
-  fileNode: ([a-zA-Z_0-9-]+)/([a-zA-Z_0-9-]+)/year=(\d+)/month=(\d+)/day=(\d+)/hour=(\d+)/([a-zA-Z_0-9-+.]+)
+  fileNode: ([a-zA-Z_0-9-]+)/(?<topic>([a-zA-Z_0-9-]+))/year=(?<year>\d+)/month=(?<month>\d+)/day=(?<day>\d+)/hour=(?<hour>\d+)/(?<fileName>([a-zA-Z_0-9-+.]+))
   structuralNode: ([a-zA-Z_0-9-]*)/?(?<topic>([a-zA-Z_0-9-]*))?/?(year=(?<year>\d+))?/?(month=(?<month>\d+))?/?(day=(?<day>\d+))?/?(hour=(?<hour>\d+))?/

@@ -1,4 +1,4 @@
-package uk.ac.ed.kafkabackupexplorerservice;
+package com.globalshares.kafkabackupexplorerservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

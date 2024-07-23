@@ -1,4 +1,4 @@
-package uk.ac.ed.kafkabackupexplorerservice;
+package com.globalshares.kafkabackupexplorerservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +11,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.StatusResultMatchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
 @SpringBootTest
@@ -70,11 +69,46 @@ public class KafkaBackupExplorerControllerTest {
 
     @Test
     void getTreeShouldReturnData() throws Exception {
-        this.mockMvc.perform(get("/api/kafkabackupexplorer/v1/")).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON));
+        this.mockMvc.perform(get("/api/kafkabackupexplorer/v1/"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(backupBlobs().isNotEmpty());
     }
 
     @Test
     void getTreeWithLimitShouldReturnData() throws Exception {
-        this.mockMvc.perform(get("/api/kafkabackupexplorer/v1/2023-11-03T14:00:15")).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON));
+        this.mockMvc.perform(get("/api/kafkabackupexplorer/v1/*/2023-11-03T14:00:15"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(backupBlobs().isNotEmpty());
+    }
+
+    @Test
+    void getTreeWithUnknownTopicShouldNotReturnData() throws Exception {
+        this.mockMvc.perform(get("/api/kafkabackupexplorer/v1/ThisTopicDoesNotExist"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(backupBlobs().isEmpty());
+    }
+
+    @Test
+    void searchAllShouldReturnDataNodes() throws Exception {
+        this.mockMvc.perform(get("/api/kafkabackupexplorer/v1/*?searchPattern=.*"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(backupBlobs().doesContainDataFileNodes());
+    }
+
+    @Test
+    void searchAllWithNoMatchShouldReturnNoDataNodes() throws Exception {
+        this.mockMvc.perform(get("/api/kafkabackupexplorer/v1/*?searchPattern=\\w*(Glienecke)\\w"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(backupBlobs().doesNotContainDataFileNodes());
+    }
+
+
+    private BackupBlobStorageNodeResponseHandler backupBlobs() {
+        return new BackupBlobStorageNodeResponseHandler();
     }
 }

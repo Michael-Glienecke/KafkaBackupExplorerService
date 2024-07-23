@@ -1,4 +1,4 @@
-package uk.ac.ed.kafkabackupexplorerservice.controller;
+package com.globalshares.kafkabackupexplorerservice.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.boot.web.servlet.error.ErrorController;
@@ -30,7 +30,7 @@ public class ErrorHandler implements ErrorController {
         String errorUrl = (String) request.getAttribute(FORWARD_REQUEST_URI);
         Integer statusCode = (Integer) request.getAttribute("javax.servlet.error.status_code");
         Exception exception = (Exception) request.getAttribute("javax.servlet.error.exception");
-        return String.format("<html><body><h1>ILP-REST-Server - Error Page</h1><div>Status code: <b>%s</b></div>"
+        return String.format("<html><body><h1>Kafka Backup Explorer - Error Page</h1><div>Status code: <b>%s</b></div>"
                         + "<div>Exception Message: <b>%s</b></div> "
                         + "<div>Original URL: <b>%s</b></div> "
                         + "<br/><div>Timestamp: <b>%s</b></div>"

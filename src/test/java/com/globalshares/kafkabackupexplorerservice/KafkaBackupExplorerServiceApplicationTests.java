@@ -1,10 +1,10 @@
-package uk.ac.ed.kafkabackupexplorerservice;
+package com.globalshares.kafkabackupexplorerservice;
 
+import com.globalshares.kafkabackupexplorerservice.controller.KafkaBackupExplorerServiceController;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import uk.ac.ed.kafkabackupexplorerservice.controller.KafkaBackupExplorerServiceController;
 
 @SpringBootTest
 class KafkaBackupExplorerServiceApplicationTests {
