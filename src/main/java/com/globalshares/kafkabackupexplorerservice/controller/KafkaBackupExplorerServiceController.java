@@ -306,11 +306,6 @@ public class KafkaBackupExplorerServiceController {
         return isNodeUsable;
     }
 
-    private BlobClient getBlobClient(UUID uniqueId){
-        var blobContainerClient = getBlobContainerClient(getBlobServiceClient());
-        return blobContainerClient.getBlobClient(uniqueId.toString());
-    }
-
     private BlobServiceClient getBlobServiceClient(){
         if (kafkaBackupStorageConnectionString == null || kafkaBackupStorageConnectionString.isBlank()) {
             throw new RuntimeException("Kafka backup storage connection string is not set");
